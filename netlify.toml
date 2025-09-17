@@ -4,8 +4,3 @@
 
 [build.environment]
   NODE_VERSION = "18"
-
-[[redirects]]
-  from = "/api/*"
-  to = "http://localhost:5000/api/:splat"
-  status = 200
