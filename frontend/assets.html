@@ -360,20 +360,29 @@
             
             // Function to load rack utilization
             function loadRackUtilization(rackId) {
-                if (!rackId) return;
+    // Prevent double-slash issue when rackId is empty
+    if (!rackId || rackId.trim() === "") {
+        console.log("No rackId provided, skipping utilization fetch");
+        return;
+    }
 
-                fetch(`/api/rack/${rackId}/utilization`)
-                    .then(response => response.json())
+            fetch(`/api/rack/${encodeURIComponent(rackId)}/utilization`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Request failed with status ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             const utilization = data.utilization;
                             const utilizationBar = document.getElementById(`utilization-${rackId}`);
-                            
+
                             if (utilizationBar) {
                                 const percentage = utilization.utilization_percentage;
                                 utilizationBar.style.width = `${percentage}%`;
                                 utilizationBar.title = `${percentage.toFixed(1)}% utilized (${utilization.used_ru}/${utilization.total_ru} RU)`;
-                                
+
                                 // Set color based on utilization
                                 if (percentage < 50) {
                                     utilizationBar.style.backgroundColor = '#2ecc71'; // Green
@@ -383,10 +392,13 @@
                                     utilizationBar.style.backgroundColor = '#e74c3c'; // Red
                                 }
                             }
+                        } else {
+                            console.warn(`Utilization fetch failed: ${data.message || "Unknown error"}`);
                         }
                     })
                     .catch(error => console.error('Error loading rack utilization:', error));
             }
+
             
             // Function to load rack details
             function loadRackDetails(rackId) {
