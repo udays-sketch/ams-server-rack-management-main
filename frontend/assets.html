@@ -360,6 +360,11 @@
             
             // Function to load rack utilization
             function loadRackUtilization(rackId) {
+                if (!rackId) {
+                    console.warn("No rackId provided, skipping utilization fetch.");
+                    return;
+                }
+
                 fetch(`/api/rack/${rackId}/utilization`)
                     .then(response => response.json())
                     .then(data => {
