@@ -395,10 +395,10 @@
             // Function to load rack utilization
             function loadRackUtilization(rackId) {
     // Prevent double-slash issue when rackId is empty
-    if (!rackId || rackId.trim() === "") {
-        console.log("No rackId provided, skipping utilization fetch");
-        return;
-    }
+            if (!rackId || rackId.trim() === "") {
+                console.log("No rackId provided, skipping utilization fetch");
+                return;
+            }
 
             fetch(`/api/rack/${encodeURIComponent(rackId)}/utilization`)
                     .then(response => {
