@@ -1,7 +1,11 @@
 [build]
   publish = "frontend"
-  # This command creates frontend/config.js from the env var at build time
-  command = "echo \"window.__CONFIG__={API_BASE_URL:'$API_BASE_URL'};\" > frontend/config.js"
+  command = ""
 
 [build.environment]
   NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://a44b4df8729c.ngrok-free.app.ngrok-free.app/api/:splat"
+  status = 200
