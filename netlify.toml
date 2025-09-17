@@ -5,8 +5,7 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Optional: keep redirects if you plan to proxy API calls to Netlify functions or another backend
 [[redirects]]
   from = "/api/*"
-  to = "http://localhost:5000/api/:splat"  # or your backend API URL
+  to = "http://localhost:5000/api/:splat"
   status = 200

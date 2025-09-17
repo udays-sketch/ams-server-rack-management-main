@@ -1,0 +1,5 @@
+src/
+venv/
+requirements.txt
+*.py
+netlify/functions/
