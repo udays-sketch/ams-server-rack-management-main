@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Server Racks - Saltmine - Beta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Updated: direct static path -->
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav class="navbar">
+                <a href="/" class="logo">
+                    <!-- Updated: static logo path -->
+                    <img src="static/public/saltmine_logo_white.png" alt="RackVision Logo" class="logo-image">
+                </a>
+                <button class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/compare" class="active">Compare</a></li>
+                    <li><a href="/assets">Asset Management</a></li>
+                    <li><a href="/reports">Reports</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Server Rack Comparison</h2>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Upload Images</h3>
+                </div>
+                <div class="card-body">
+                    <form id="compare-form" class="needs-validation" enctype="multipart/form-data">
+                        <div class="d-flex flex-wrap">
+                            <div class="p-3" style="flex: 1; min-width: 300px;">
+                                <div class="form-group">
+                                    <label class="form-label">Before Image</label>
+                                    <div class="file-upload" id="before-upload">
+                                        <div class="file-upload-icon">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                        </div>
+                                        <div class="file-upload-text">
+                                            <p>Drag and drop or click to upload</p>
+                                            <p class="file-name"></p>
+                                        </div>
+                                        <div class="file-preview" style="display: none;"></div>
+                                        <input type="file" name="before_image" accept=".jpg,.jpeg,.png,.webp" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3" style="flex: 1; min-width: 300px;">
+                                <div class="form-group">
+                                    <label class="form-label">After Image</label>
+                                    <div class="file-upload" id="after-upload">
+                                        <div class="file-upload-icon">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                        </div>
+                                        <div class="file-upload-text">
+                                            <p>Drag and drop or click to upload</p>
+                                            <p class="file-name"></p>
+                                        </div>
+                                        <div class="file-preview" style="display: none;"></div>
+                                        <input type="file" name="after_image" accept=".jpg,.jpeg,.png,.webp" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mt-4">
+                            <label class="form-label">Rack ID</label>
+                            <select class="form-control" name="rack_id">
+                                <option value="RACK-001">RACK-001 (Primary Web Server Rack)</option>
+                                <option value="RACK-002">RACK-002 (Database Server Rack)</option>
+                                <option value="RACK-003">RACK-003 (Network Equipment Rack)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary">Compare Images</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="loading-indicator" style="display: none;" class="text-center my-4">
+                <div class="spinner">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                </div>
+                <p class="mt-2">Processing images, please wait...</p>
+            </div>
+            
+            <div id="comparison-results"></div>
+            
+            <div id="reconciliation-loading" style="display: none;" class="text-center my-4">
+                <div class="spinner">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                </div>
+                <p class="mt-2">Reconciling with Asset Management System, please wait...</p>
+            </div>
+            
+            <div id="reconciliation-results"></div>
+        </div>
+    </section>
+    
+    <!-- Discrepancy Modal -->
+    <div id="discrepancy-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="discrepancy-modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <ul class="footer-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/privacy">Privacy Policy</a></li>
+                <li><a href="/terms">Terms of Service</a></li>
+            </ul>
+            <p class="copyright">© 2025 Saltmine. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Updated: static script -->
+    <script src="static/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const compareForm = document.getElementById('compare-form');
+            
+            if (compareForm) {
+                compareForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    const resultsContainer = document.getElementById('comparison-results');
+                    const loadingIndicator = document.getElementById('loading-indicator');
+                    
+                    if (loadingIndicator) loadingIndicator.style.display = 'block';
+                    if (resultsContainer) resultsContainer.innerHTML = '';
+                    
+                    fetch('http://localhost:5000/api/compare', {  /* 👈 Replace with your ngrok URL */
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (loadingIndicator) loadingIndicator.style.display = 'none';
+                        
+                        if (data.success) {
+                            if (resultsContainer) {
+                                resultsContainer.innerHTML = `
+                                    <div class="alert alert-success">
+                                        <strong>Success!</strong> Images compared successfully.
+                                    </div>
+                                    <div class="card mb-4">
+                                        <div class="card-header">
+                                            <h3>Comparison Results</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="image-comparison-result">
+                                                <img src="${data.comparison_image}" alt="Comparison Result" class="img-fluid w-100">
+                                            </div>
+                                            <div class="mt-3 text-center">
+                                                <p>SSIM Score: ${data.ssim_score.toFixed(4)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        } else {
+                            if (resultsContainer) {
+                                resultsContainer.innerHTML = `
+                                    <div class="alert alert-danger">
+                                        <strong>Error!</strong> ${data.message || 'Failed to compare images.'}
+                                    </div>
+                                `;
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        if (loadingIndicator) loadingIndicator.style.display = 'none';
+                        if (resultsContainer) {
+                            resultsContainer.innerHTML = `
+                                <div class="alert alert-danger">
+                                    <strong>Error!</strong> An unexpected error occurred.
+                                </div>
+                            `;
+                        }
+                        console.error('Error:', error);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -6,7 +6,7 @@
     <title>Reports - Saltmine - Beta</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="static/css/style.css">
 </head>
 <body>
     <!-- Header -->
@@ -14,7 +14,7 @@
         <div class="container">
             <nav class="navbar">
                 <a href="/" class="logo">
-                    <img src="{{ url_for('static', filename='public/saltmine_logo_white.png') }}" alt="RackVision Logo" class="logo-image">
+                    <img src="static/public/saltmine_logo_white.png" alt="RackVision Logo" class="logo-image">
                 </a>
                 <button class="mobile-menu-btn">
                     <i class="fas fa-bars"></i>
@@ -64,21 +64,21 @@
                                 </tr>
                             </thead>
                             <tbody id="discrepancies-table-body">
-                                {% for d in discrepancies %}
-                                {% if d.status == 'Open' %}
-                                <tr data-severity="{{ d.severity }}" class="discrepancy-row">
-                                    <td>{{ d.discrepancy_id[:8] }}...</td>
-                                    <td>{{ d.type }}</td>
-                                    <td>Rack {{ d.rack_id }}, RU {{ d.ru_position }}</td>
-                                    <td><span class="badge bg-{{ 'danger' if d.severity == 'High' else 'warning' if d.severity == 'Medium' else 'success' }}">{{ d.severity }}</span></td>
-                                    <td>{{ d.created_at }}</td>
+                                
+                                
+                                <tr data-severity="" class="discrepancy-row">
+                                    <td>...</td>
+                                    <td></td>
+                                    <td>Rack , RU </td>
+                                    <td><span class="badge bg-"></span></td>
+                                    <td></td>
                                     <td>
-                                        <button class="btn btn-sm btn-primary view-discrepancy" data-id="{{ d.discrepancy_id }}">View</button>
-                                        <button class="btn btn-sm btn-success resolve-discrepancy" data-id="{{ d.discrepancy_id }}">Resolve</button>
+                                        <button class="btn btn-sm btn-primary view-discrepancy" data-id="">View</button>
+                                        <button class="btn btn-sm btn-success resolve-discrepancy" data-id="">Resolve</button>
                                     </td>
                                 </tr>
-                                {% endif %}
-                                {% endfor %}
+                                
+                                
                             </tbody>
                         </table>
                     </div>
@@ -104,21 +104,21 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for d in discrepancies %}
-                                {% if d.status == 'Resolved' %}
+                                
+                                
                                 <tr>
-                                    <td>{{ d.discrepancy_id[:8] }}...</td>
-                                    <td>{{ d.type }}</td>
-                                    <td>Rack {{ d.rack_id }}, RU {{ d.ru_position }}</td>
-                                    <td><span class="badge bg-{{ 'danger' if d.severity == 'High' else 'warning' if d.severity == 'Medium' else 'success' }}">{{ d.severity }}</span></td>
-                                    <td>{{ d.resolved_at }}</td>
-                                    <td>{{ d.resolved_by }}</td>
+                                    <td>...</td>
+                                    <td></td>
+                                    <td>Rack , RU </td>
+                                    <td><span class="badge bg-"></span></td>
+                                    <td></td>
+                                    <td></td>
                                     <td>
-                                        <button class="btn btn-sm btn-primary view-discrepancy" data-id="{{ d.discrepancy_id }}">View</button>
+                                        <button class="btn btn-sm btn-primary view-discrepancy" data-id="">View</button>
                                     </td>
                                 </tr>
-                                {% endif %}
-                                {% endfor %}
+                                
+                                
                             </tbody>
                         </table>
                     </div>
@@ -174,7 +174,7 @@
         </div>
     </footer>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="static/js/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // View discrepancy details
