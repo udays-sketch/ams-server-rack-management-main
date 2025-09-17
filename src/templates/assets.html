@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Management - Saltmine - Beta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav class="navbar">
+                <a href="/" class="logo">
+                    <img src="{{ url_for('static', filename='public/saltmine_logo_white.png') }}" alt="RackVision Logo" class="logo-image">
+                </a>
+                <button class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/compare">Compare</a></li>
+                    <li><a href="/assets" class="active">Asset Management</a></li>
+                    <li><a href="/reports">Reports</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Asset Management</h2>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Server Racks</h3>
+                    <button class="btn btn-primary btn-sm" id="add-rack-btn">
+                        <i class="fas fa-plus"></i> Add Rack
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Rack ID</th>
+                                    <th>Location</th>
+                                    <th>Description</th>
+                                    <th>Total RU</th>
+                                    <th>Utilization</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="racks-table-body">
+                                {% for rack in racks %}
+                                <tr>
+                                    <td>{{ rack.rack_id }}</td>
+                                    <td>{{ rack.location }}</td>
+                                    <td>{{ rack.description }}</td>
+                                    <td>{{ rack.total_ru }}</td>
+                                    <td>
+                                        <div class="utilization-bar">
+                                            <div class="utilization-progress" id="utilization-{{ rack.rack_id }}"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-rack" data-id="{{ rack.rack_id }}">View</button>
+                                        <button class="btn btn-sm btn-secondary edit-rack" data-id="{{ rack.rack_id }}">Edit</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="rack-details" class="card mb-4" style="display: none;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>Rack Details: <span id="rack-id-display"></span></h3>
+                    <button class="btn btn-primary btn-sm" id="add-asset-btn">
+                        <i class="fas fa-plus"></i> Add Asset
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="rack-visualization mb-4">
+                        <div class="rack-container" id="rack-visualization">
+                            <!-- Rack units will be generated here -->
+                        </div>
+                        <div class="rack-legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #3498db;"></div>
+                                <div class="legend-label">Server</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #2ecc71;"></div>
+                                <div class="legend-label">Network</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                                <div class="legend-label">Storage</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #f39c12;"></div>
+                                <div class="legend-label">Power</div>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #9b59b6;"></div>
+                                <div class="legend-label">Other</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Asset ID</th>
+                                    <th>Type</th>
+                                    <th>Model</th>
+                                    <th>RU Position</th>
+                                    <th>RU Size</th>
+                                    <th>Serial Number</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assets-table-body">
+                                <!-- Assets will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Add/Edit Rack Modal -->
+    <div id="rack-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="rack-modal-title">Add New Rack</h3>
+            <form id="rack-form">
+                <input type="hidden" id="rack-form-mode" value="add">
+                <input type="hidden" id="rack-form-id" value="">
+                
+                <div class="form-group">
+                    <label class="form-label" for="rack-id-input">Rack ID</label>
+                    <input type="text" class="form-control" id="rack-id-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="rack-location">Location</label>
+                    <input type="text" class="form-control" id="rack-location" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="rack-description">Description</label>
+                    <input type="text" class="form-control" id="rack-description" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="rack-total-ru">Total Rack Units</label>
+                    <input type="number" class="form-control" id="rack-total-ru" min="1" max="52" value="42" required>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary">Save Rack</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-rack-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Asset Modal -->
+    <div id="asset-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="asset-modal-title">Add New Asset</h3>
+            <form id="asset-form">
+                <input type="hidden" id="asset-form-mode" value="add">
+                <input type="hidden" id="asset-form-id" value="">
+                <input type="hidden" id="asset-form-rack-id" value="">
+                
+                <div class="form-group">
+                    <label class="form-label" for="asset-id-input">Asset ID</label>
+                    <input type="text" class="form-control" id="asset-id-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="asset-type">Type</label>
+                    <select class="form-control" id="asset-type" required>
+                        <option value="Server">Server</option>
+                        <option value="Switch">Switch</option>
+                        <option value="Router">Router</option>
+                        <option value="Storage">Storage</option>
+                        <option value="UPS">UPS</option>
+                        <option value="PDU">PDU</option>
+                        <option value="KVM">KVM</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="asset-model">Model</label>
+                    <input type="text" class="form-control" id="asset-model" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="asset-ru-position">RU Position</label>
+                    <input type="number" class="form-control" id="asset-ru-position" min="1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="asset-ru-size">RU Size</label>
+                    <input type="number" class="form-control" id="asset-ru-size" min="1" value="1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="asset-serial">Serial Number</label>
+                    <input type="text" class="form-control" id="asset-serial" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="asset-status">Status</label>
+                    <select class="form-control" id="asset-status" required>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Reserved">Reserved</option>
+                    </select>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary">Save Asset</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-asset-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Asset Details Modal -->
+    <div id="asset-details-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Asset Details</h3>
+            <div id="asset-details-content"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <ul class="footer-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/privacy">Privacy Policy</a></li>
+                <li><a href="/terms">Terms of Service</a></li>
+            </ul>
+            <p class="copyright">© 2025 Saltmine. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load rack utilization
+            {% for rack in racks %}
+                loadRackUtilization('{{ rack.rack_id }}');
+            {% endfor %}
+            
+            // View rack details
+            document.querySelectorAll('.view-rack').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const rackId = this.getAttribute('data-id');
+                    loadRackDetails(rackId);
+                });
+            });
+            
+            // Edit rack
+            document.querySelectorAll('.edit-rack').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const rackId = this.getAttribute('data-id');
+                    editRack(rackId);
+                });
+            });
+            
+            // Add rack button
+            const addRackBtn = document.getElementById('add-rack-btn');
+            if (addRackBtn) {
+                addRackBtn.addEventListener('click', function() {
+                    showRackModal('add');
+                });
+            }
+            
+            // Add asset button
+            const addAssetBtn = document.getElementById('add-asset-btn');
+            if (addAssetBtn) {
+                addAssetBtn.addEventListener('click', function() {
+                    const rackId = document.getElementById('rack-id-display').textContent;
+                    showAssetModal('add', rackId);
+                });
+            }
+            
+            // Cancel rack button
+            const cancelRackBtn = document.getElementById('cancel-rack-btn');
+            if (cancelRackBtn) {
+                cancelRackBtn.addEventListener('click', function() {
+                    hideRackModal();
+                });
+            }
+            
+            // Cancel asset button
+            const cancelAssetBtn = document.getElementById('cancel-asset-btn');
+            if (cancelAssetBtn) {
+                cancelAssetBtn.addEventListener('click', function() {
+                    hideAssetModal();
+                });
+            }
+            
+            // Rack form submission
+            const rackForm = document.getElementById('rack-form');
+            if (rackForm) {
+                rackForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveRack();
+                });
+            }
+            
+            // Asset form submission
+            const assetForm = document.getElementById('asset-form');
+            if (assetForm) {
+                assetForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    saveAsset();
+                });
+            }
+            
+            // Close buttons for modals
+            document.querySelectorAll('.modal .close').forEach(closeBtn => {
+                closeBtn.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    modal.style.display = 'none';
+                });
+            });
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+            });
+            
+            // Function to load rack utilization
+            function loadRackUtilization(rackId) {
+                fetch(`/api/rack/${rackId}/utilization`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const utilization = data.utilization;
+                            const utilizationBar = document.getElementById(`utilization-${rackId}`);
+                            
+                            if (utilizationBar) {
+                                const percentage = utilization.utilization_percentage;
+                                utilizationBar.style.width = `${percentage}%`;
+                                utilizationBar.title = `${percentage.toFixed(1)}% utilized (${utilization.used_ru}/${utilization.total_ru} RU)`;
+                                
+                                // Set color based on utilization
+                                if (percentage < 50) {
+                                    utilizationBar.style.backgroundColor = '#2ecc71'; // Green
+                                } else if (percentage < 80) {
+                                    utilizationBar.style.backgroundColor = '#f39c12'; // Orange
+                                } else {
+                                    utilizationBar.style.backgroundColor = '#e74c3c'; // Red
+                                }
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error loading rack utilization:', error));
+            }
+            
+            // Function to load rack details
+            function loadRackDetails(rackId) {
+                // Update rack ID display
+                document.getElementById('rack-id-display').textContent = rackId;
+                
+                // Show rack details section
+                document.getElementById('rack-details').style.display = 'block';
+                
+                // Load assets
+                fetch(`/api/rack/${rackId}/assets`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const assets = data.assets;
+                            const assetsTableBody = document.getElementById('assets-table-body');
+                            
+                            // Clear existing rows
+                            assetsTableBody.innerHTML = '';
+                            
+                            // Add asset rows
+                            assets.forEach(asset => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${asset.asset_id}</td>
+                                    <td>${asset.asset_type}</td>
+                                    <td>${asset.model}</td>
+                                    <td>${asset.ru_position}</td>
+                                    <td>${asset.ru_size}</td>
+                                    <td>${asset.serial_number}</td>
+                                    <td>${asset.status}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-asset" data-id="${asset.asset_id}">View</button>
+                                        <button class="btn btn-sm btn-secondary edit-asset" data-id="${asset.asset_id}">Edit</button>
+                                        <button class="btn btn-sm btn-danger remove-asset" data-id="${asset.asset_id}">Remove</button>
+                                    </td>
+                                `;
+                                assetsTableBody.appendChild(row);
+                            });
+                            
+                            // Add event listeners to asset buttons
+                            document.querySelectorAll('.view-asset').forEach(btn => {
+                                btn.addEventListener('click', function() {
+                                    const assetId = this.getAttribute('data-id');
+                                    viewAssetDetails(assetId);
+                                });
+                            });
+                            
+                            document.querySelectorAll('.edit-asset').forEach(btn => {
+                                btn.addEventListener('click', function() {
+                                    const assetId = this.getAttribute('data-id');
+                                    editAsset(assetId);
+                                });
+                            });
+                            
+                            document.querySelectorAll('.remove-asset').forEach(btn => {
+                                btn.addEventListener('click', function() {
+                                    const assetId = this.getAttribute('data-id');
+                                    removeAsset(assetId);
+                                });
+                            });
+                            
+                            // Generate rack visualization
+                            generateRackVisualization(rackId, assets);
+                        }
+                    })
+                    .catch(error => console.error('Error loading rack assets:', error));
+            }
+            
+            // Function to generate rack visualization
+            function generateRackVisualization(rackId, assets) {
+                fetch(`/api/rack/${rackId}/utilization`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const utilization = data.utilization;
+                            const rackContainer = document.getElementById('rack-visualization');
+                            
+                            // Clear existing visualization
+                            rackContainer.innerHTML = '';
+                            
+                            // Create rack units
+                            for (let i = utilization.total_ru; i >= 1; i--) {
+                                const ruDiv = document.createElement('div');
+                                ruDiv.className = 'rack-unit';
+                                ruDiv.innerHTML = `<div class="ru-label">${i}</div>`;
+                                
+                                // Check if this RU has an asset
+                                const asset = assets.find(a => a.ru_position <= i && (a.ru_position + a.ru_size - 1) >= i);
+                                
+                                if (asset) {
+                                    ruDiv.classList.add('occupied');
+                                    
+                                    // Set color based on asset type
+                                    let color;
+                                    switch (asset.asset_type.toLowerCase()) {
+                                        case 'server':
+                                            color = '#3498db'; // Blue
+                                            break;
+                                        case 'switch':
+                                        case 'router':
+                                            color = '#2ecc71'; // Green
+                                            break;
+                                        case 'storage':
+                                            color = '#e74c3c'; // Red
+                                            break;
+                                        case 'ups':
+                                        case 'pdu':
+                                            color = '#f39c12'; // Orange
+                                            break;
+                                        default:
+                                            color = '#9b59b6'; // Purple
+                                    }
+                                    
+                                    ruDiv.style.backgroundColor = color;
+                                    
+                                    // Add asset info if this is the first RU of the asset
+                                    if (i === asset.ru_position) {
+                                        const assetInfo = document.createElement('div');
+                                        assetInfo.className = 'asset-info';
+                                        assetInfo.textContent = `${asset.asset_type}: ${asset.model}`;
+                                        assetInfo.style.height = `${asset.ru_size * 100}%`;
+                                        ruDiv.appendChild(assetInfo);
+                                    }
+                                }
+                                
+                                rackContainer.appendChild(ruDiv);
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error generating rack visualization:', error));
+            }
+            
+            // Function to show rack modal
+            function showRackModal(mode, rackId = null) {
+                const modal = document.getElementById('rack-modal');
+                const title = document.getElementById('rack-modal-title');
+                const formMode = document.getElementById('rack-form-mode');
+                const formId = document.getElementById('rack-form-id');
+                
+                // Set mode and title
+                formMode.value = mode;
+                title.textContent = mode === 'add' ? 'Add New Rack' : 'Edit Rack';
+                
+                if (mode === 'edit' && rackId) {
+                    // Load rack data
+                    fetch(`/api/rack/${rackId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const rack = data.rack;
+                                
+                                // Set form values
+                                document.getElementById('rack-id-input').value = rack.rack_id;
+                                document.getElementById('rack-location').value = rack.location;
+                                document.getElementById('rack-description').value = rack.description;
+                                document.getElementById('rack-total-ru').value = rack.total_ru;
+                                
+                                // Set form ID
+                                formId.value = rack.rack_id;
+                                
+                                // Show modal
+                                modal.style.display = 'block';
+                            }
+                        })
+                        .catch(error => console.error('Error loading rack data:', error));
+                } else {
+                    // Clear form for new rack
+                    document.getElementById('rack-form').reset();
+                    formId.value = '';
+                    
+                    // Show modal
+                    modal.style.display = 'block';
+                }
+            }
+            
+            // Function to hide rack modal
+            function hideRackModal() {
+                document.getElementById('rack-modal').style.display = 'none';
+            }
+            
+            // Function to save rack
+            function saveRack() {
+                const mode = document.getElementById('rack-form-mode').value;
+                const rackId = document.getElementById('rack-id-input').value;
+                const location = document.getElementById('rack-location').value;
+                const description = document.getElementById('rack-description').value;
+                const totalRu = document.getElementById('rack-total-ru').value;
+                
+                const rackData = {
+                    rack_id: rackId,
+                    location: location,
+                    description: description,
+                    total_ru: parseInt(totalRu)
+                };
+                
+                const url = mode === 'add' ? '/api/rack' : `/api/rack/${document.getElementById('rack-form-id').value}`;
+                const method = mode === 'add' ? 'POST' : 'PUT';
+                
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(rackData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Hide modal
+                        hideRackModal();
+                        
+                        // Reload page to show updated data
+                        window.location.reload();
+                    } else {
+                        alert(`Failed to save rack: ${data.message || 'Unknown error'}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving rack:', error);
+                    alert('An unexpected error occurred.');
+                });
+            }
+            
+            // Function to edit rack
+            function editRack(rackId) {
+                showRackModal('edit', rackId);
+            }
+            
+            // Function to show asset modal
+            function showAssetModal(mode, rackId, assetId = null) {
+                const modal = document.getElementById('asset-modal');
+                const title = document.getElementById('asset-modal-title');
+                const formMode = document.getElementById('asset-form-mode');
+                const formId = document.getElementById('asset-form-id');
+                const formRackId = document.getElementById('asset-form-rack-id');
+                
+                // Set mode and title
+                formMode.value = mode;
+                title.textContent = mode === 'add' ? 'Add New Asset' : 'Edit Asset';
+                
+                // Set rack ID
+                formRackId.value = rackId;
+                
+                if (mode === 'edit' && assetId) {
+                    // Load asset data
+                    fetch(`/api/asset/${assetId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const asset = data.asset;
+                                
+                                // Set form values
+                                document.getElementById('asset-id-input').value = asset.asset_id;
+                                document.getElementById('asset-type').value = asset.asset_type;
+                                document.getElementById('asset-model').value = asset.model;
+                                document.getElementById('asset-ru-position').value = asset.ru_position;
+                                document.getElementById('asset-ru-size').value = asset.ru_size;
+                                document.getElementById('asset-serial').value = asset.serial_number;
+                                document.getElementById('asset-status').value = asset.status;
+                                
+                                // Set form ID
+                                formId.value = asset.asset_id;
+                                
+                                // Show modal
+                                modal.style.display = 'block';
+                            }
+                        })
+                        .catch(error => console.error('Error loading asset data:', error));
+                } else {
+                    // Clear form for new asset
+                    document.getElementById('asset-form').reset();
+                    formId.value = '';
+                    
+                    // Show modal
+                    modal.style.display = 'block';
+                }
+            }
+            
+            // Function to hide asset modal
+            function hideAssetModal() {
+                document.getElementById('asset-modal').style.display = 'none';
+            }
+            
+            // Function to save asset
+            function saveAsset() {
+                const mode = document.getElementById('asset-form-mode').value;
+                const assetId = document.getElementById('asset-id-input').value;
+                const rackId = document.getElementById('asset-form-rack-id').value;
+                const assetType = document.getElementById('asset-type').value;
+                const model = document.getElementById('asset-model').value;
+                const ruPosition = document.getElementById('asset-ru-position').value;
+                const ruSize = document.getElementById('asset-ru-size').value;
+                const serialNumber = document.getElementById('asset-serial').value;
+                const status = document.getElementById('asset-status').value;
+                
+                const assetData = {
+                    asset_id: assetId,
+                    rack_id: rackId,
+                    asset_type: assetType,
+                    model: model,
+                    ru_position: parseInt(ruPosition),
+                    ru_size: parseInt(ruSize),
+                    serial_number: serialNumber,
+                    status: status
+                };
+                
+                const url = mode === 'add' ? '/api/asset' : `/api/asset/${document.getElementById('asset-form-id').value}`;
+                const method = mode === 'add' ? 'POST' : 'PUT';
+                
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(assetData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Hide modal
+                        hideAssetModal();
+                        
+                        // Reload rack details
+                        loadRackDetails(rackId);
+                    } else {
+                        alert(`Failed to save asset: ${data.message || 'Unknown error'}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving asset:', error);
+                    alert('An unexpected error occurred.');
+                });
+            }
+            
+            // Function to edit asset
+            function editAsset(assetId) {
+                const rackId = document.getElementById('rack-id-display').textContent;
+                showAssetModal('edit', rackId, assetId);
+            }
+            
+            // Function to view asset details
+            function viewAssetDetails(assetId) {
+                fetch(`/api/asset/${assetId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const asset = data.asset;
+                            const modal = document.getElementById('asset-details-modal');
+                            const content = document.getElementById('asset-details-content');
+                            
+                            content.innerHTML = `
+                                <div class="asset-details">
+                                    <p><strong>Asset ID:</strong> ${asset.asset_id}</p>
+                                    <p><strong>Type:</strong> ${asset.asset_type}</p>
+                                    <p><strong>Model:</strong> ${asset.model}</p>
+                                    <p><strong>Rack:</strong> ${asset.rack_id}</p>
+                                    <p><strong>RU Position:</strong> ${asset.ru_position}</p>
+                                    <p><strong>RU Size:</strong> ${asset.ru_size}</p>
+                                    <p><strong>Serial Number:</strong> ${asset.serial_number}</p>
+                                    <p><strong>Status:</strong> ${asset.status}</p>
+                                    <p><strong>Installation Date:</strong> ${new Date(asset.installation_date).toLocaleString()}</p>
+                                    <p><strong>Last Updated:</strong> ${new Date(asset.last_updated).toLocaleString()}</p>
+                                </div>
+                            `;
+                            
+                            modal.style.display = 'block';
+                        }
+                    })
+                    .catch(error => console.error('Error loading asset details:', error));
+            }
+            
+            // Function to remove asset
+            function removeAsset(assetId) {
+                if (confirm('Are you sure you want to remove this asset?')) {
+                    const rackId = document.getElementById('rack-id-display').textContent;
+                    
+                    fetch(`/api/asset/${assetId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reload rack details
+                            loadRackDetails(rackId);
+                        } else {
+                            alert(`Failed to remove asset: ${data.message || 'Unknown error'}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error removing asset:', error);
+                        alert('An unexpected error occurred.');
+                    });
+                }
+            }
+        });
+    </script>
+    
+    <style>
+        /* Additional styles for this page */
+        .utilization-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .utilization-progress {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+        }
+        
+        .rack-visualization {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .rack-container {
+            width: 200px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .rack-unit {
+            height: 20px;
+            background-color: #f1f1f1;
+            border-bottom: 1px solid #ddd;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .rack-unit.occupied {
+            color: white;
+        }
+        
+        .ru-label {
+            position: absolute;
+            left: 5px;
+            font-size: 12px;
+        }
+        
+        .asset-info {
+            position: absolute;
+            left: 30px;
+            right: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+        }
+        
+        .rack-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+        
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</body>
+</html>
