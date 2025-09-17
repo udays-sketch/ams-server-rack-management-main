@@ -273,7 +273,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Load rack utilization
             
-                loadRackUtilization('');
+                // loadRackUtilization('');
             
             
             // View rack details
@@ -360,7 +360,7 @@
             
             // Function to load rack utilization
             function loadRackUtilization(rackId) {
-                if (!rackId) return;
+                // if (!rackId) return;
 
                 fetch(`/api/rack/${rackId}/utilization`)
                     .then(response => response.json())
