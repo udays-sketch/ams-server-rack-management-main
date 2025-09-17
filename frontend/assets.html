@@ -270,11 +270,45 @@
 
     <script src="static/js/main.js"></script>
     <script>
+         function loadRacks() {
+                fetch('/api/racks')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const racks = data.racks;
+                            const tableBody = document.getElementById('racks-table-body');
+                            tableBody.innerHTML = '';
+
+                            racks.forEach(rack => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${rack.rack_id}</td>
+                                    <td>${rack.location}</td>
+                                    <td>${rack.description}</td>
+                                    <td>${rack.total_ru}</td>
+                                    <td>
+                                        <div class="utilization-bar">
+                                            <div class="utilization-progress" id="utilization-${rack.rack_id}"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-rack" data-id="${rack.rack_id}">View</button>
+                                        <button class="btn btn-sm btn-secondary edit-rack" data-id="${rack.rack_id}">Edit</button>
+                                    </td>
+                                `;
+                                tableBody.appendChild(row);
+
+                                // Load utilization for this rack
+                                loadRackUtilization(rack.rack_id);
+                            });
+                        }
+                    })
+                    .catch(error => console.error('Error loading racks:', error));
+            }
         document.addEventListener('DOMContentLoaded', function() {
             // Load rack utilization
             
-                loadRackUtilization('');
-            
+                loadRacks();
             
             // View rack details
             document.querySelectorAll('.view-rack').forEach(btn => {
