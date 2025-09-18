@@ -7,5 +7,5 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://7d207b6718e8.ngrok-free.app/api/:splat"
+  to = "https://0036fa9effe7.ngrok-free.app/api/:splat"
   status = 200
